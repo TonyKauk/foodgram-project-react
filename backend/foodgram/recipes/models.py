@@ -18,8 +18,8 @@ class Recipe(models.Model):
         blank=True
     )
     description = models.TextField()
-    ingridients = models.ManyToManyField(
-        'IngridientAmount',
+    ingredients = models.ManyToManyField(
+        'IngredientAmount',
 #        on_delete=models.CASCADE,
         related_name='recipes',
     )
@@ -44,7 +44,7 @@ class Tag(models.Model):
         return self.title
 
 
-class Ingridient(models.Model):
+class Ingredient(models.Model):
     title = models.CharField(max_length=200)
     unit = models.CharField(max_length=200)
 
@@ -52,17 +52,17 @@ class Ingridient(models.Model):
         return self.title
 
 
-class IngridientAmount(models.Model):
-    ingridient = models.ForeignKey(
-        Ingridient,
+class IngredientAmount(models.Model):
+    ingredient = models.ForeignKey(
+        Ingredient,
         on_delete=models.CASCADE,
-        related_name='ingridient_amount',
+        related_name='ingredient_amount',
     )
     amount = models.IntegerField()
     unit = models.ForeignKey(
-        Ingridient,
+        Ingredient,
         on_delete=models.CASCADE,
-        related_name='ingridient_unit',
+        related_name='ingredient_unit',
     )
 
     def __str__(self):
