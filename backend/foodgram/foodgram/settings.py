@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'sorl.thumbnail',
     'colorfield',
     'rest_framework',
+    'rest_framework.authtoken',
     'djoser',
 ]
 
@@ -146,16 +147,18 @@ STATIC_URL = '/static/'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+#         'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+#         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
     ],
 }
 
 
-SIMPLE_JWT = {
-   'ACCESS_TOKEN_LIFETIME': timedelta(days=1),
-   'AUTH_HEADER_TYPES': ('Bearer',),
-}
+# SIMPLE_JWT = {
+#    'ACCESS_TOKEN_LIFETIME': timedelta(days=100),
+#    'AUTH_HEADER_TYPES': ('Bearer',),
+# }

@@ -2,31 +2,106 @@
 # from django.contrib.auth.tokens import PasswordResetTokenGenerator
 # from django.core.mail import send_mail
 # from django.db.models import Avg
-# from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404
 # from django_filters.rest_framework import DjangoFilterBackend
-# from rest_framework import filters, permissions, status, viewsets
-# from rest_framework.decorators import action
+from rest_framework import filters, permissions, status, viewsets
+from rest_framework.decorators import action
 # from rest_framework.exceptions import MethodNotAllowed
 # from rest_framework.permissions import AllowAny, IsAuthenticated
-# from rest_framework.response import Response
+from rest_framework.response import Response
 # from rest_framework_simplejwt.tokens import AccessToken
 # 
 # from .filters import TitleFilter
-# from .mixins import ListCreateDestroyViewSet
-# from reviews.models import (
-#     Category, Genre,
-#     Review, Title, User
-# )
+from .mixins import ListCreateDestroyViewSet, ListRetrieveCreateViewSet
+from recipes.models import Tag, Ingredient
 # from .permissions import (
 #     IsAdmin, IsAdminOrReadOnly, IsAdminModerAuthorAuthenticatedOrReadOnly
 # )
-# from .serializers import (
-#     CategorySerializer, CommentSerializer, GenreSerializer,
-#     ReviewSerializer, SignupSerializer, TitleGetSerializer,
-#     TitleSerializer, TokenSerializer, UserSerializer
-# )
+from .serializers import (
+    ListRetrieveUserSerializer, TagSerializer, IngredientSerializer
+    )
+
+from users.models import User
+
+
+class UserViewSet(ListRetrieveCreateViewSet):
+    queryset = User.objects.all()
+    serializer_class = ListRetrieveUserSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return UserSignUpSerializer
+        return ListRetrieveUserSerializer
+
+    @action(methods=('GET',), url_path='me', detail=False)
+    def me(self, request):
+        user = get_object_or_404(User, username=request.user.username)
+
+        serializer = self.get_serializer(user, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(methods=('POST',), url_path='set-password', detail=False)
+    def set_password(self, request):
+        user = get_object_or_404(User, username=request.user.username)
+        serializer = UserPasswordResetSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user.password = serializer.data['new_password']
+        user.save()
+        return Response(status=status.HTTP_200_OK)
+
+
+class TagViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+
+
+class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+
+
+
+# class UserPasswordResetViewSet(viewsets.ModelViewSet):
+#     serializer_class = UserPasswordResetSerializer
 # 
+#     def get_queryset(self, request):
+#         user = get_object_or_404(User, username=request.user.username)
+#         return user
 # 
+#     def create(self, request):
+#         user = self.get_queryset()
+#         serializer = UserPasswordResetSerializer(data=request.data)
+#         user.password = serializer.new_password
+#         user.save()
+#         return Response(status=status.HTTP_200_OK)
+
+
+# ########################################################################
+# class UserViewSet(viewsets.ModelViewSet):
+#     queryset = User.objects.all()
+#     serializer_class = UserListRetrieveSerializer
+# 
+#     @action(
+#         detail=False, methods=('GET',),
+#         url_path='me',  # permission_classes=(IsAuthenticated,)
+#     )
+#     def me(self, request):
+#         user = get_object_or_404(User, username=request.user.username)
+# 
+#         serializer = UserListRetrieveSerializer(
+#             user,
+#             context={'request': request},
+#             data=request.data,
+#             partial=True
+#         )
+#         serializer.is_valid(raise_exception=True)
+#         serializer.save(role=user.role)
+#         return Response(
+#             serializer.data,
+#             status=status.HTTP_200_OK
+#         )
+# ########################################################################
+
 # class UserViewSet(viewsets.ModelViewSet):
 #     queryset = User.objects.all()
 #     permission_classes = (IsAuthenticated, IsAdmin)
@@ -57,8 +132,8 @@
 #             serializer.data,
 #             status=status.HTTP_200_OK
 #         )
-# 
-# 
+
+
 # class SingupViewSet(viewsets.ModelViewSet):
 #     querryset = User.objects.all()
 #     permission_classes = (AllowAny,)

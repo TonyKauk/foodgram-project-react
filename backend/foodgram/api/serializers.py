@@ -1,28 +1,135 @@
 # import datetime as dt
 # 
-# from rest_framework import serializers
-# from django.shortcuts import get_object_or_404
+from requests import request
+from rest_framework import serializers
+from django.shortcuts import get_object_or_404
+from recipes.models import Tag, Ingredient
 # from rest_framework.validators import UniqueValidator
-# 
-# from recipes.models import (
-#     Category, Comment, Genre,
-#     Review, Title, User
-# )
-# 
-# 
-# class UserSerializer(serializers.ModelSerializer):
+
+from users.models import User
+from recipes.models import FollowAuthor
+
+
+class ListRetrieveUserSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+
+    def get_is_subscribed(self, user):
+        current_user = self.context['request'].user
+        return FollowAuthor.objects.filter(
+            user=current_user,
+            author=user,
+        ).exists()
+
+    class Meta:
+        model = User
+        fields = [
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+        ]
+
+
+class UserSignUpSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    id = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = [
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'password',
+            'id',
+        ]
+
+
+class UserPasswordResetSerializer(serializers.Serializer):
+    new_password = serializers.CharField(max_length=200)
+    current_password = serializers.CharField(max_length=200)
+
+
+class TagSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Tag
+        fields = [
+            'id',
+            'name',
+            'color',
+            'slug',
+        ]
+
+
+class IngredientSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Ingredient
+        fields = [
+            'id',
+            'name',
+            'measurement_unit',
+        ]
+
+
+# ########################################################################
+# class UserListRetrieveSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = User
 #         fields = [
+#             'email',
+#             'id',
+#             'username',
 #             'first_name',
 #             'last_name',
-#             'username',
-#             'bio',
-#             'email',
-#             'role',
+# #            'is_subscribed',
 #         ]
 # 
 # 
+# class SignupSerializer(serializers.Serializer):
+#     email = serializers.EmailField(
+#         validators=(UniqueValidator(queryset=User.objects.all()),)
+#     )
+#     username = serializers.CharField(
+#         validators=(UniqueValidator(queryset=User.objects.all()),)
+#     )
+#     first_name = serializers.CharField(max_length=150)
+#     last_name = serializers.CharField(max_length=150)
+# 
+#     class Meta:
+#         model = User
+#         fields = (
+#             'username',
+#             'email',
+#         )
+# 
+# 
+# class UserPasswordResetSerializer(serializers.Serializer):
+#     new_password = serializers.CharField(max_length=200)
+#     current_password = serializers.CharField(max_length=200)
+# 
+# 
+# class TokenSerializer(serializers.Serializer):
+#     password = serializers.CharField(max_length=200)
+#     email = serializers.EmailField(max_length=100)
+# ########################################################################
+
+# class TokenSerializer(serializers.Serializer):
+#     username = serializers.CharField()
+#     confirmation_code = serializers.CharField(max_length=100)
+# 
+#     class Meta:
+#         model = User
+#         fields = (
+#             'username',
+#             'confirmation_code',
+#         )
+
+
 # class SignupSerializer(serializers.Serializer):
 #     username = serializers.CharField(
 #         validators=(UniqueValidator(queryset=User.objects.all()),)

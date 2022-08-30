@@ -11,45 +11,43 @@ class Recipe(models.Model):
         on_delete=models.CASCADE,
         related_name='recipes',
     )
-    title = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
     image = models.ImageField(
         'Картинка',
         upload_to='recipes/',
         blank=True
     )
-    description = models.TextField()
+    text = models.TextField()
     ingredients = models.ManyToManyField(
         'IngredientAmount',
-#        on_delete=models.CASCADE,
         related_name='recipes',
     )
     tags = models.ManyToManyField(
         'Tag',
-#        on_delete=models.CASCADE,
         related_name='recipe',
     )
     cooking_time = models.IntegerField()
     pub_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return self.title
+        return self.name
 
 
 class Tag(models.Model):
-    title = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
     color = ColorField()
     slug = models.SlugField(unique=True)
 
     def __str__(self):
-        return self.title
+        return self.name
 
 
 class Ingredient(models.Model):
-    title = models.CharField(max_length=200)
-    unit = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
+    measurement_unit = models.CharField(max_length=200)
 
     def __str__(self):
-        return self.title
+        return (f'{self.name}, {self.measurement_unit}')
 
 
 class IngredientAmount(models.Model):
@@ -59,14 +57,11 @@ class IngredientAmount(models.Model):
         related_name='ingredient_amount',
     )
     amount = models.IntegerField()
-    unit = models.ForeignKey(
-        Ingredient,
-        on_delete=models.CASCADE,
-        related_name='ingredient_unit',
-    )
 
     def __str__(self):
-        return self.title
+        return (
+            f'{self.ingredient.name} - {self.amount}, {self.ingredient.measurement_unit}'
+        )
 
 
 class FollowAuthor(models.Model):

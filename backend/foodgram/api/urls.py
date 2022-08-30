@@ -1,15 +1,16 @@
-# from django.urls import include, path
-# from rest_framework.routers import DefaultRouter
-# 
-# from .views import (
-#     CategoryViewSet, CommentViewSet, GenreViewSet,
-#     ReviewViewSet, SingupViewSet, TitleViewSet,
-#     TokenViewSet, UserViewSet
-# )
-# 
-# router = DefaultRouter()
-# router_auth = DefaultRouter()
-# 
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt import views
+
+from .views import TagViewSet, UserViewSet, IngredientViewSet
+
+
+router = DefaultRouter()
+
+router.register('users', UserViewSet)
+router.register('tags', TagViewSet)
+router.register('ingredients', IngredientViewSet)
+
 # router_auth.register(
 #     'token', TokenViewSet, basename='tokens'
 # )
@@ -41,7 +42,10 @@
 # )
 # 
 # 
-# urlpatterns = [
-#     path('v1/', include(router.urls)),
-#     path('v1/auth/', include(router_auth.urls)),
-# ]
+
+urlpatterns = [
+    path('', include(router.urls)),
+    path('auth/', include('djoser.urls')),
+#     path('auth/', include('djoser.urls.jwt')),
+    path('auth/', include('djoser.urls.authtoken')),
+]

@@ -25,8 +25,9 @@
 #     ReviewSerializer, SignupSerializer, TitleGetSerializer,
 #     TitleSerializer, TokenSerializer, UserSerializer
 # )
-# 
-# 
+
+# from users.models import User
+
 # class UserViewSet(viewsets.ModelViewSet):
 #     queryset = User.objects.all()
 #     permission_classes = (IsAuthenticated, IsAdmin)
@@ -57,8 +58,8 @@
 #             serializer.data,
 #             status=status.HTTP_200_OK
 #         )
-# 
-# 
+
+
 # class SingupViewSet(viewsets.ModelViewSet):
 #     querryset = User.objects.all()
 #     permission_classes = (AllowAny,)

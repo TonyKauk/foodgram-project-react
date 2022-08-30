@@ -1,28 +1,28 @@
-import datetime as dt
-
-from rest_framework import serializers
-from django.shortcuts import get_object_or_404
-from rest_framework.validators import UniqueValidator
-
-from recipes.models import (
-    Category, Comment, Genre,
-    Review, Title, User
-)
-
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = [
-            'first_name',
-            'last_name',
-            'username',
-#             'bio',
-            'email',
-#             'role',
-        ]
-
-
+# import datetime as dt
+# 
+# from rest_framework import serializers
+# from django.shortcuts import get_object_or_404
+# from rest_framework.validators import UniqueValidator
+# 
+# from recipes.models import (
+#     Category, Comment, Genre,
+#     Review, Title, User
+# )
+# 
+# 
+# class UserSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = User
+#         fields = [
+#             'first_name',
+#             'last_name',
+#             'username',
+#              'bio',
+#             'email',
+#              'role',
+#         ]
+# 
+# 
 # class SignupSerializer(serializers.Serializer):
 #     username = serializers.CharField(
 #         validators=(UniqueValidator(queryset=User.objects.all()),)
