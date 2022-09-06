@@ -5,20 +5,27 @@
 from django.shortcuts import get_object_or_404
 # from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
+from rest_framework.views import APIView
 from rest_framework.decorators import action
 # from rest_framework.exceptions import MethodNotAllowed
 # from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 # from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.decorators import api_view
 # 
 # from .filters import TitleFilter
 from .mixins import ListCreateDestroyViewSet, ListRetrieveCreateViewSet
-from recipes.models import Tag, Ingredient
+from recipes.models import (
+    Tag, Ingredient, Recipe, IngredientAmount, Cart
+)
 # from .permissions import (
 #     IsAdmin, IsAdminOrReadOnly, IsAdminModerAuthorAuthenticatedOrReadOnly
 # )
 from .serializers import (
-    ListRetrieveUserSerializer, TagSerializer, IngredientSerializer
+    ListRetrieveUserSerializer, TagSerializer, IngredientSerializer,
+    RecipeListRetrieveSerializer, UserSignUpSerializer,
+    UserPasswordResetSerializer, IngredientAmountListRetrieveSerializer,
+    RecipePostUpdateSerializer,
     )
 
 from users.models import User
@@ -58,6 +65,54 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+
+
+class IngredientAmountViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = IngredientAmount.objects.all()
+    serializer_class = IngredientAmountListRetrieveSerializer
+
+
+class RecipeViewSet(viewsets.ModelViewSet):
+    queryset = Recipe.objects.all()
+
+    def get_serializer_class(self):
+        if self.action == ('list' or 'retrieve'):
+            return RecipeListRetrieveSerializer
+        return RecipePostUpdateSerializer
+
+
+class CartView(APIView):
+    def get(self, request):
+        pass
+
+    def post(self, request):
+        recipe_id = request.kwargs.get('id')
+        recipe = Recipe.objects.get(id=recipe_id)
+        user = request.user
+        Cart.objects.add(user=user, recipe=recipe)
+        return Response(
+            {
+                'id': f'{recipe.id}',
+                'name': f'{recipe.name}',
+                'image': f'{recipe.image}',
+                'cooking_time': f'{recipe.cooking_time}'
+            }, status=status.HTTP_200_OK
+        )
+
+    def delete(self, request):
+        pass
+
+    return
+
+
+#    def get_serializer_class(self):
+#        if self.action == 'list' or 'retrieve':
+#            return RecipeListRetrieveSerializer
+#        return RecipePostUpdateSerializer
+
+#    def perform_create(self, serializer):
+#        author = self.request.user
+#        serializer.save(author=author)
 
 
 

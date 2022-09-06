@@ -47,11 +47,11 @@ class Ingredient(models.Model):
     measurement_unit = models.CharField(max_length=200)
 
     def __str__(self):
-        return (f'{self.name}, {self.measurement_unit}')
+        return f'{self.name}'
 
 
 class IngredientAmount(models.Model):
-    ingredient = models.ForeignKey(
+    name = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
         related_name='ingredient_amount',
@@ -60,7 +60,7 @@ class IngredientAmount(models.Model):
 
     def __str__(self):
         return (
-            f'{self.ingredient.name} - {self.amount}, {self.ingredient.measurement_unit}'
+            f'{self.name.name} - {self.amount}, {self.name.measurement_unit}'
         )
 
 

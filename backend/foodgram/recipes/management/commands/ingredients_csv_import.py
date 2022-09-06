@@ -25,8 +25,8 @@ class Command(BaseCommand):
         for row in DictReader(open(path)):
             ingredient = Ingredient(
                 pk=temp_pk+1,
-                title=row['title'],
-                unit=row['unit'],
+                name=row['name'],
+                measurement_unit=row['measurement_unit'],
             )
             temp_pk += 1
 

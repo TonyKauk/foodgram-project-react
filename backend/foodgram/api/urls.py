@@ -2,7 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt import views
 
-from .views import TagViewSet, UserViewSet, IngredientViewSet
+from .views import TagViewSet, UserViewSet, IngredientViewSet, RecipeViewSet, IngredientAmountViewSet
 
 
 router = DefaultRouter()
@@ -10,6 +10,8 @@ router = DefaultRouter()
 router.register('users', UserViewSet)
 router.register('tags', TagViewSet)
 router.register('ingredients', IngredientViewSet)
+router.register('recipes', RecipeViewSet)
+router.register('ingredientamount', IngredientAmountViewSet)
 
 # router_auth.register(
 #     'token', TokenViewSet, basename='tokens'

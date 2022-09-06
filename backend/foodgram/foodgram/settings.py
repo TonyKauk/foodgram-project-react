@@ -162,3 +162,12 @@ REST_FRAMEWORK = {
 #    'ACCESS_TOKEN_LIFETIME': timedelta(days=100),
 #    'AUTH_HEADER_TYPES': ('Bearer',),
 # }
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+
+DJOSER = {
+    'LOGIN_FIELD': 'email',
+}
