@@ -2,16 +2,21 @@
 # from django.contrib.auth.tokens import PasswordResetTokenGenerator
 # from django.core.mail import send_mail
 # from django.db.models import Avg
+from django.shortcuts import HttpResponse
+from django.db.models import Avg, Count, Min, Sum
 from django.shortcuts import get_object_or_404
+from psycopg2 import DatabaseError
 # from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
-from rest_framework.views import APIView
+# from rest_framework.views import ViewSet
+from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 # from rest_framework.exceptions import MethodNotAllowed
 # from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 # from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
 # 
 # from .filters import TitleFilter
 from .mixins import ListCreateDestroyViewSet, ListRetrieveCreateViewSet
@@ -25,7 +30,7 @@ from .serializers import (
     ListRetrieveUserSerializer, TagSerializer, IngredientSerializer,
     RecipeListRetrieveSerializer, UserSignUpSerializer,
     UserPasswordResetSerializer, IngredientAmountListRetrieveSerializer,
-    RecipePostUpdateSerializer,
+    RecipePostUpdateSerializer, RecipePostToCartSerializer
     )
 
 from users.models import User
@@ -80,40 +85,83 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return RecipeListRetrieveSerializer
         return RecipePostUpdateSerializer
 
+    @action(
+       methods=('GET',),
+       url_path='download_shopping_cart',
+       detail=False
+    )
+    def download_shopping_cart(self, request):
+        ingredients = IngredientAmount.objects.filter(
+            recipes__cart__user=request.user).values(
+                'name__name',
+                'name__measurement_unit'
+            ).annotate(Sum('amount'))
 
-class CartView(APIView):
-    def get(self, request):
-        pass
+        list_of_ingredients = 'List of Ingredients \n\n'
+        for ingredient in ingredients:
+            values = list(ingredient.values())
+            list_of_ingredients += (
+                f'{values[0]} '
+                f'({values[1]}) - '
+                f'{values[2]}\n'
+            )
 
-    def post(self, request):
-        recipe_id = request.kwargs.get('id')
-        recipe = Recipe.objects.get(id=recipe_id)
-        user = request.user
-        Cart.objects.add(user=user, recipe=recipe)
-        return Response(
-            {
-                'id': f'{recipe.id}',
-                'name': f'{recipe.name}',
-                'image': f'{recipe.image}',
-                'cooking_time': f'{recipe.cooking_time}'
-            }, status=status.HTTP_200_OK
+        filename = 'ingredients.txt'
+        response = HttpResponse(
+            list_of_ingredients,
+            content_type='text/plain; charset=UTF-8',
+        )
+        response['Content-Disposition'] = (
+            'attachment; filename={0}'.format(filename)
         )
 
-    def delete(self, request):
-        pass
+        return response
 
-    return
+#        recipe_list = []
+#        for ingredient in ingredients:
+#            element = {}
+#            element['name'] = ingredient['name']
+#            element['measurement_unit'] = ingredient['measurement_unit']
+#            element['amount'] = ingredient['amount']
+#            recipe_list.append(element)
+#         return Response(recipe_list)
+        return Response(ingredients)
+
+##########################################################################################
+#        ingredients = RecipeIngredient.objects.filter(
+#            recipe__carts__user=request.user).values(
+#                'ingredient__name',
+#                'ingredient__measurement_unit'
+#        ).annotate(Sum('amount'))
+# 
+#        shop_list = 'Список покупок \n\n'
+#        for ingredient in ingredients:
+#            shop_list += (
+#                f"{ingredient['ingredient_name']} "
+#                f"({ingredient['ingredient_measurement_unit']}) - "
+#                f"{ingredient['amount__sum']}\n"            )
+#            return HttpResponse(shop_list, content_type='text/plain')
+##########################################################################################
 
 
-#    def get_serializer_class(self):
-#        if self.action == 'list' or 'retrieve':
-#            return RecipeListRetrieveSerializer
-#        return RecipePostUpdateSerializer
+class CartViewSet(viewsets.ModelViewSet):
+    queryset = Cart.objects.all()
+    serializer_class = RecipePostToCartSerializer
 
-#    def perform_create(self, serializer):
-#        author = self.request.user
-#        serializer.save(author=author)
+    def create(self, request, **kwargs):
+        recipe_id = kwargs.get('recipe_id')
+        recipe = Recipe.objects.get(id=recipe_id)
+        user = request.user
+        Cart.objects.create(user=user, recipe=recipe)
+        data = self.serializer_class(recipe).data
+        return Response(data, status=status.HTTP_200_OK)
 
+    def delete(self, request, **kwargs):
+        recipe_id = kwargs.get('recipe_id')
+        user = request.user
+        recipe = Recipe.objects.get(id=recipe_id)
+        Cart.objects.filter(user=user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # class UserPasswordResetViewSet(viewsets.ModelViewSet):

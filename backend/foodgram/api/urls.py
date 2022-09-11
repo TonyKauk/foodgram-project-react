@@ -2,7 +2,10 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt import views
 
-from .views import TagViewSet, UserViewSet, IngredientViewSet, RecipeViewSet, IngredientAmountViewSet
+from .views import (
+    TagViewSet, UserViewSet, IngredientViewSet, RecipeViewSet,
+    IngredientAmountViewSet, CartViewSet
+)
 
 
 router = DefaultRouter()
@@ -12,6 +15,12 @@ router.register('tags', TagViewSet)
 router.register('ingredients', IngredientViewSet)
 router.register('recipes', RecipeViewSet)
 router.register('ingredientamount', IngredientAmountViewSet)
+router.register(
+    r'recipes/(?P<recipe_id>\d+)/shopping_cart',
+#    'recipes/65/shopping_cart/',
+    CartViewSet,
+    basename='carts'
+    )
 
 # router_auth.register(
 #     'token', TokenViewSet, basename='tokens'
@@ -48,6 +57,7 @@ router.register('ingredientamount', IngredientAmountViewSet)
 urlpatterns = [
     path('', include(router.urls)),
     path('auth/', include('djoser.urls')),
-#     path('auth/', include('djoser.urls.jwt')),
+#    path('recipes/<int:id>/shopping_cart/', CartView.as_view()),
+#    path(r'recipes/(?P<id>\d+)/shopping_cart/', CartView.as_view()),
     path('auth/', include('djoser.urls.authtoken')),
 ]

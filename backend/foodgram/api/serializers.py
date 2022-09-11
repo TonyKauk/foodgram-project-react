@@ -205,8 +205,23 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
             recipe.ingredients.add(ingredient_amount_id)
         return recipe
 
-    def update(self, validated_data):
-        return validated_data
+    def update(self, instance, validated_data):
+        tags_list = validated_data.pop('tags')
+        ingredients_list = validated_data.pop('ingredients')
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        recipe = instance
+
+        recipe.tags.set(tags_list)
+
+        recipe.ingredients.clear()
+        for ingredient in ingredients_list:
+            ingredient_amount = IngredientAmount.objects.create(
+                **ingredient
+            )
+            recipe.ingredients.add(ingredient_amount.id)
+        return recipe
 
     class Meta:
         model = Recipe
@@ -219,6 +234,22 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
             'cooking_time',
         ]
 
+
+class RecipePostToCartSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = [
+            'id',
+            'name',
+            'image',
+            'cooking_time',
+        ]
+        read_only_fields = [
+            'id',
+            'name',
+            'image',
+            'cooking_time',
+        ]
 
 # ########################################################################
 # class UserListRetrieveSerializer(serializers.ModelSerializer):

@@ -8,7 +8,8 @@ User = get_user_model()
 class Recipe(models.Model):
     author = models.ForeignKey(
         User,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_DEFAULT,
+        default=1,
         related_name='recipes',
     )
     name = models.CharField(max_length=200)
