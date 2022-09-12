@@ -251,6 +251,41 @@ class RecipePostToCartSerializer(serializers.ModelSerializer):
             'cooking_time',
         ]
 
+
+class FollowAuthorSerializer(serializers.ModelSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+    recipes = RecipePostToCartSerializer(
+        read_only=True,
+        many=True,
+    )
+    recipes_count = serializers.SerializerMethodField()
+
+    def get_is_subscribed(self, user):
+        current_user = self.context['request'].user
+        author = user
+        return FollowAuthor.objects.filter(
+            user=author,
+            author=current_user,
+        ).exists()
+
+    def get_recipes_count(self, user):
+        author = User.objects.get(id=user.id)
+        count = Recipe.objects.filter(author=author).count()
+        return count
+
+    class Meta:
+        model = User
+        fields = [
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count',
+        ]
+
 # ########################################################################
 # class UserListRetrieveSerializer(serializers.ModelSerializer):
 #     class Meta:

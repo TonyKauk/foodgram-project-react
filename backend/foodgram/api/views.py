@@ -19,9 +19,10 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 # 
 # from .filters import TitleFilter
-from .mixins import ListCreateDestroyViewSet, ListRetrieveCreateViewSet
+from .mixins import CreateDestroyViewSet, ListRetrieveCreateViewSet
 from recipes.models import (
-    Tag, Ingredient, Recipe, IngredientAmount, Cart
+    Tag, Ingredient, Recipe, IngredientAmount, Cart,
+    FavoriteRecipe, FollowAuthor
 )
 # from .permissions import (
 #     IsAdmin, IsAdminOrReadOnly, IsAdminModerAuthorAuthenticatedOrReadOnly
@@ -30,7 +31,8 @@ from .serializers import (
     ListRetrieveUserSerializer, TagSerializer, IngredientSerializer,
     RecipeListRetrieveSerializer, UserSignUpSerializer,
     UserPasswordResetSerializer, IngredientAmountListRetrieveSerializer,
-    RecipePostUpdateSerializer, RecipePostToCartSerializer
+    RecipePostUpdateSerializer, RecipePostToCartSerializer,
+    FollowAuthorSerializer,
     )
 
 from users.models import User
@@ -60,6 +62,34 @@ class UserViewSet(ListRetrieveCreateViewSet):
         user.password = serializer.data['new_password']
         user.save()
         return Response(status=status.HTTP_200_OK)
+
+    @action(methods=('GET',), url_path='subscriptions', detail=False)
+    def subscriptions(self, request):
+        user = get_object_or_404(User, username=request.user.username)
+        subscriptions = User.objects.filter(
+            following__user=user.id
+        )
+        data = FollowAuthorSerializer(
+            subscriptions,
+            context={'request': request},
+            many=True
+        )
+        return Response(data.data, status=status.HTTP_200_OK)
+
+
+# class UserPasswordResetViewSet(viewsets.ModelViewSet):
+#     serializer_class = UserPasswordResetSerializer
+# 
+#     def get_queryset(self, request):
+#         user = get_object_or_404(User, username=request.user.username)
+#         return user
+# 
+#     def create(self, request):
+#         user = self.get_queryset()
+#         serializer = UserPasswordResetSerializer(data=request.data)
+#         user.password = serializer.new_password
+#         user.save()
+#         return Response(status=status.HTTP_200_OK)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -114,18 +144,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = (
             'attachment; filename={0}'.format(filename)
         )
-
         return response
-
-#        recipe_list = []
-#        for ingredient in ingredients:
-#            element = {}
-#            element['name'] = ingredient['name']
-#            element['measurement_unit'] = ingredient['measurement_unit']
-#            element['amount'] = ingredient['amount']
-#            recipe_list.append(element)
-#         return Response(recipe_list)
-        return Response(ingredients)
 
 ##########################################################################################
 #        ingredients = RecipeIngredient.objects.filter(
@@ -144,7 +163,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 ##########################################################################################
 
 
-class CartViewSet(viewsets.ModelViewSet):
+class CartViewSet(CreateDestroyViewSet):
     queryset = Cart.objects.all()
     serializer_class = RecipePostToCartSerializer
 
@@ -164,19 +183,50 @@ class CartViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# class UserPasswordResetViewSet(viewsets.ModelViewSet):
-#     serializer_class = UserPasswordResetSerializer
-# 
-#     def get_queryset(self, request):
-#         user = get_object_or_404(User, username=request.user.username)
-#         return user
-# 
-#     def create(self, request):
-#         user = self.get_queryset()
-#         serializer = UserPasswordResetSerializer(data=request.data)
-#         user.password = serializer.new_password
-#         user.save()
-#         return Response(status=status.HTTP_200_OK)
+class FavoriteViewSet(CreateDestroyViewSet):
+    queryset = FavoriteRecipe.objects.all()
+    serializer_class = RecipePostToCartSerializer
+
+    def create(self, request, **kwargs):
+        recipe_id = kwargs.get('recipe_id')
+        recipe = Recipe.objects.get(id=recipe_id)
+        user = request.user
+        FavoriteRecipe.objects.create(user=user, recipe=recipe)
+        data = self.serializer_class(recipe).data
+        return Response(data, status=status.HTTP_200_OK)
+
+    def delete(self, request, **kwargs):
+        recipe_id = kwargs.get('recipe_id')
+        user = request.user
+        recipe = Recipe.objects.get(id=recipe_id)
+        FavoriteRecipe.objects.filter(user=user, recipe=recipe).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class FollowAuthorViewSet(CreateDestroyViewSet):
+    queryset = FollowAuthor.objects.all()
+    serializer_class = FollowAuthorSerializer
+
+    def create(self, request, **kwargs):
+        user_id = kwargs.get('user_id')
+        author = User.objects.get(id=user_id)
+        user = request.user
+        FollowAuthor.objects.create(user=user, author=author)
+        data = self.serializer_class(
+            author,
+            context={'request': request},
+            data=request.data,
+            partial=True
+        )
+        data.is_valid(raise_exception=True)
+        return Response(data.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, **kwargs):
+        user_id = kwargs.get('user_id')
+        user = request.user
+        author = User.objects.get(id=user_id)
+        FollowAuthor.objects.filter(user=user, author=author).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # ########################################################################
