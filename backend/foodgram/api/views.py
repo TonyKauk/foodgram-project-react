@@ -2,6 +2,7 @@
 # from django.contrib.auth.tokens import PasswordResetTokenGenerator
 # from django.core.mail import send_mail
 # from django.db.models import Avg
+from re import sub
 from django.shortcuts import HttpResponse
 from django.db.models import Avg, Count, Min, Sum
 from django.shortcuts import get_object_or_404
@@ -17,6 +18,7 @@ from rest_framework.response import Response
 # from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
+from .pagination import CustomPagination
 # 
 # from .filters import TitleFilter
 from .mixins import CreateDestroyViewSet, ListRetrieveCreateViewSet
@@ -41,6 +43,7 @@ from users.models import User
 class UserViewSet(ListRetrieveCreateViewSet):
     queryset = User.objects.all()
     serializer_class = ListRetrieveUserSerializer
+    pagination_class = CustomPagination
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -54,7 +57,7 @@ class UserViewSet(ListRetrieveCreateViewSet):
         serializer = self.get_serializer(user, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(methods=('POST',), url_path='set-password', detail=False)
+    @action(methods=('POST',), url_path='set_password', detail=False)
     def set_password(self, request):
         user = get_object_or_404(User, username=request.user.username)
         serializer = UserPasswordResetSerializer(data=request.data)
@@ -69,27 +72,23 @@ class UserViewSet(ListRetrieveCreateViewSet):
         subscriptions = User.objects.filter(
             following__user=user.id
         )
-        data = FollowAuthorSerializer(
+
+        page = self.paginate_queryset(subscriptions)
+
+        if page is not None:
+            serializer = FollowAuthorSerializer(
+                page,
+                context={'request': request},
+                many=True
+            )
+            return self.get_paginated_response(serializer.data)
+
+        serializer = FollowAuthorSerializer(
             subscriptions,
             context={'request': request},
             many=True
         )
-        return Response(data.data, status=status.HTTP_200_OK)
-
-
-# class UserPasswordResetViewSet(viewsets.ModelViewSet):
-#     serializer_class = UserPasswordResetSerializer
-# 
-#     def get_queryset(self, request):
-#         user = get_object_or_404(User, username=request.user.username)
-#         return user
-# 
-#     def create(self, request):
-#         user = self.get_queryset()
-#         serializer = UserPasswordResetSerializer(data=request.data)
-#         user.password = serializer.new_password
-#         user.save()
-#         return Response(status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -109,6 +108,7 @@ class IngredientAmountViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
+    pagination_class = CustomPagination
 
     def get_serializer_class(self):
         if self.action == ('list' or 'retrieve'):

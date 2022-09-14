@@ -1,6 +1,5 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt import views
 
 from .views import (
     TagViewSet, UserViewSet, IngredientViewSet, RecipeViewSet,
