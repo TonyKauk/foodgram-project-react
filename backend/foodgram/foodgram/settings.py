@@ -156,6 +156,7 @@ REST_FRAMEWORK = {
 #         'rest_framework_simplejwt.authentication.JWTAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ],
+    'SEARCH_PARAM': 'name',
 }
 
 

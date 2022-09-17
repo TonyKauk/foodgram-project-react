@@ -20,8 +20,7 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from .pagination import CustomPagination
 from django_filters.rest_framework import DjangoFilterBackend
-# 
-# from .filters import TitleFilter
+
 from .mixins import CreateDestroyViewSet, ListRetrieveCreateViewSet
 from recipes.models import (
     Tag, Ingredient, Recipe, IngredientAmount, Cart,
@@ -71,7 +70,6 @@ class UserViewSet(ListRetrieveCreateViewSet):
     @action(methods=('GET',), url_path='subscriptions', detail=False)
     def subscriptions(self, request):
         user = get_object_or_404(User, username=request.user.username)
-#        recipes_limit_filter = request.query_params.get('recipes_limit')
         subscriptions = User.objects.filter(
             following__user=user.id
         )
@@ -102,6 +100,8 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('^name',)
 
 
 class IngredientAmountViewSet(viewsets.ReadOnlyModelViewSet):
