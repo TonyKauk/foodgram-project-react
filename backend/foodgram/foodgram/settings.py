@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'sorl.thumbnail',
     'colorfield',
     'rest_framework',
+    'django_filters',
     'rest_framework.authtoken',
     'djoser',
 ]
@@ -171,3 +172,5 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DJOSER = {
     'LOGIN_FIELD': 'email',
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

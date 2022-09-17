@@ -4,7 +4,7 @@
 # from django.db.models import Avg
 from re import sub
 from django.shortcuts import HttpResponse
-from django.db.models import Avg, Count, Min, Sum
+from django.db.models import Avg, Count, Min, Sum, Value, BooleanField
 from django.shortcuts import get_object_or_404
 from psycopg2 import DatabaseError
 # from django_filters.rest_framework import DjangoFilterBackend
@@ -19,6 +19,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from .pagination import CustomPagination
+from django_filters.rest_framework import DjangoFilterBackend
 # 
 # from .filters import TitleFilter
 from .mixins import CreateDestroyViewSet, ListRetrieveCreateViewSet
@@ -36,6 +37,7 @@ from .serializers import (
     RecipePostUpdateSerializer, RecipePostToCartSerializer,
     FollowAuthorSerializer,
     )
+# from .filters import RecipeFilter
 
 from users.models import User
 
@@ -69,6 +71,7 @@ class UserViewSet(ListRetrieveCreateViewSet):
     @action(methods=('GET',), url_path='subscriptions', detail=False)
     def subscriptions(self, request):
         user = get_object_or_404(User, username=request.user.username)
+#        recipes_limit_filter = request.query_params.get('recipes_limit')
         subscriptions = User.objects.filter(
             following__user=user.id
         )
@@ -109,11 +112,40 @@ class IngredientAmountViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     pagination_class = CustomPagination
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ('author', 'tags')
 
     def get_serializer_class(self):
         if self.action == ('list' or 'retrieve'):
             return RecipeListRetrieveSerializer
         return RecipePostUpdateSerializer
+
+    def get_queryset(self):
+        current_user = self.request.user
+        queryset = self.queryset
+        is_favorited_filter = self.request.query_params.get('is_favorited')
+        is_in_shopping_cart_filter = self.request.query_params.get('is_in_shopping_cart')
+
+        if is_favorited_filter is not None:
+            if is_favorited_filter == '1':
+                queryset = queryset.filter(
+                    added_to_favorite__user=current_user,
+                )
+            else:
+                queryset = queryset.exclude(
+                    added_to_favorite__user=current_user,
+                )
+
+        if is_in_shopping_cart_filter is not None:
+            if is_in_shopping_cart_filter == '1':
+                queryset = queryset.filter(
+                    added_to_cart__user=current_user,
+                )
+            else:
+                queryset = queryset.exclude(
+                    added_to_cart__user=current_user,
+                )
+        return queryset
 
     @action(
        methods=('GET',),

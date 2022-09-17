@@ -139,6 +139,8 @@ class RecipeListRetrieveSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountListRetrieveSerializer(read_only=True, many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
+#    is_favorited = serializers.BooleanField()
+#    is_in_shopping_cart = serializers.BooleanField()
     image = Base64ImageField(required=False, allow_null=True)
 
     def get_is_favorited(self, recipe):
@@ -254,10 +256,7 @@ class RecipePostToCartSerializer(serializers.ModelSerializer):
 
 class FollowAuthorSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
-    recipes = RecipePostToCartSerializer(
-        read_only=True,
-        many=True,
-    )
+    recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
     def get_is_subscribed(self, user):
@@ -267,6 +266,20 @@ class FollowAuthorSerializer(serializers.ModelSerializer):
             user=author,
             author=current_user,
         ).exists()
+
+    def get_recipes(self, user):
+        recipes_limit = self.context.get('request').query_params.get('recipes_limit')
+        recipes = Recipe.objects.filter(author=user)
+
+        if recipes_limit is not None:
+            recipes = recipes[:int(recipes_limit)]
+
+        serializer = RecipePostToCartSerializer(
+            recipes,
+            read_only=True,
+            many=True,
+        )
+        return serializer.data
 
     def get_recipes_count(self, user):
         author = User.objects.get(id=user.id)
