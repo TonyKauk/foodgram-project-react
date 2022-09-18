@@ -13,7 +13,7 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 # from rest_framework.exceptions import MethodNotAllowed
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated, AllowAny
 from rest_framework.response import Response
 # from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import api_view
@@ -26,9 +26,10 @@ from recipes.models import (
     Tag, Ingredient, Recipe, IngredientAmount, Cart,
     FavoriteRecipe, FollowAuthor
 )
-from .permissions import (
-    NotAuthenticatedUsersListRetrieve, NotAuthenticatedUsersPost,
-)
+# from .permissions import (
+#     NotAuthenticatedUsersListRetrieve, NotAuthenticatedUsersPost,
+#     RecipeAuthorPatchDelete,
+# )
 from .serializers import (
     ListRetrieveUserSerializer, TagSerializer, IngredientSerializer,
     RecipeListRetrieveSerializer, UserSignUpSerializer,
@@ -43,11 +44,7 @@ class UserViewSet(ListRetrieveCreateViewSet):
     queryset = User.objects.all()
     serializer_class = ListRetrieveUserSerializer
     pagination_class = CustomPagination
-    permission_classes = [
-        IsAuthenticated
-        | NotAuthenticatedUsersListRetrieve
-        | NotAuthenticatedUsersPost
-    ]
+    permission_classes = (AllowAny,)
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -112,6 +109,7 @@ class UserViewSet(ListRetrieveCreateViewSet):
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+    permission_classes = (IsAuthenticated,)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -119,11 +117,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name',)
-
-
-class IngredientAmountViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = IngredientAmount.objects.all()
-    serializer_class = IngredientAmountListRetrieveSerializer
+    permission_classes = (IsAuthenticated,)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -131,7 +125,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = CustomPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('author', 'tags')
-    permission_classes = (NotAuthenticatedUsersListRetrieve,)
+#    permission_classes = [
+#        NotAuthenticatedUsersListRetrieve
+#        | (RecipeAuthorPatchDelete & IsAuthenticated)
+#    ]
 
     def get_serializer_class(self):
         if self.action == ('list' or 'retrieve'):
@@ -277,6 +274,13 @@ class FollowAuthorViewSet(CreateDestroyViewSet):
         author = User.objects.get(id=user_id)
         FollowAuthor.objects.filter(user=user, author=author).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ########################################################################
+# class IngredientAmountViewSet(viewsets.ReadOnlyModelViewSet):
+#     queryset = IngredientAmount.objects.all()
+#     serializer_class = IngredientAmountListRetrieveSerializer
+# ########################################################################
 
 
 # ########################################################################

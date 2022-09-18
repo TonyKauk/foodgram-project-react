@@ -1,17 +1,28 @@
 from rest_framework import permissions
 
 
-class NotAuthenticatedUsersListRetrieve(permissions.BasePermission):
-    def has_permission(self, request, view):
-        search_for_tags = 'author' not in request.query_params
-        return (
-            (request.method in permissions.SAFE_METHODS) and search_for_tags
-        )
+# class NotAuthenticatedUsersListRetrieve(permissions.BasePermission):
+#     def has_permission(self, request, view):
+#         search_for_tags = (
+#             'author' and 'is_favorited' and 'is_in_shopping_cart'
+#         ) not in request.query_params
+#         return (
+#             (request.method in permissions.SAFE_METHODS) and search_for_tags
+#         )
 
 
-class NotAuthenticatedUsersPost(permissions.BasePermission):
+# class NotAuthenticatedUsersPost(permissions.BasePermission):
+#     def has_permission(self, request, view):
+#         return request.method == 'POST'
+
+
+class RecipeAuthorPatchDelete(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.method == 'POST'
+        auth = request.user.is_authenticated
+        return (request.method is ('PATCH' or 'DELETE') and auth)
+
+    def has_object_permission(self, request, view, obj):
+        return obj.author == request.user
 
 
 #############################################################################

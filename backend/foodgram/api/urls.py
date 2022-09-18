@@ -3,8 +3,8 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     TagViewSet, UserViewSet, IngredientViewSet, RecipeViewSet,
-    IngredientAmountViewSet, CartViewSet, FavoriteViewSet,
-    FollowAuthorViewSet,
+    CartViewSet, FavoriteViewSet,
+    FollowAuthorViewSet,  #IngredientAmountViewSet
 )
 
 
@@ -14,7 +14,7 @@ router.register('users', UserViewSet)
 router.register('tags', TagViewSet)
 router.register('ingredients', IngredientViewSet)
 router.register('recipes', RecipeViewSet)
-router.register('ingredientamount', IngredientAmountViewSet)
+# router.register('ingredientamount', IngredientAmountViewSet)
 router.register(
     r'recipes/(?P<recipe_id>\d+)/shopping_cart',
     CartViewSet,
