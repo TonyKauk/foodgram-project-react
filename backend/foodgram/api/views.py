@@ -13,7 +13,7 @@ from rest_framework import filters, permissions, status, viewsets
 from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 # from rest_framework.exceptions import MethodNotAllowed
-# from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 # from rest_framework_simplejwt.tokens import AccessToken
 from rest_framework.decorators import api_view
@@ -26,9 +26,9 @@ from recipes.models import (
     Tag, Ingredient, Recipe, IngredientAmount, Cart,
     FavoriteRecipe, FollowAuthor
 )
-# from .permissions import (
-#     IsAdmin, IsAdminOrReadOnly, IsAdminModerAuthorAuthenticatedOrReadOnly
-# )
+from .permissions import (
+    NotAuthenticatedUsersListRetrieve, NotAuthenticatedUsersPost,
+)
 from .serializers import (
     ListRetrieveUserSerializer, TagSerializer, IngredientSerializer,
     RecipeListRetrieveSerializer, UserSignUpSerializer,
@@ -36,8 +36,6 @@ from .serializers import (
     RecipePostUpdateSerializer, RecipePostToCartSerializer,
     FollowAuthorSerializer,
     )
-# from .filters import RecipeFilter
-
 from users.models import User
 
 
@@ -45,29 +43,48 @@ class UserViewSet(ListRetrieveCreateViewSet):
     queryset = User.objects.all()
     serializer_class = ListRetrieveUserSerializer
     pagination_class = CustomPagination
+    permission_classes = [
+        IsAuthenticated
+        | NotAuthenticatedUsersListRetrieve
+        | NotAuthenticatedUsersPost
+    ]
 
     def get_serializer_class(self):
         if self.action == 'create':
             return UserSignUpSerializer
-        return ListRetrieveUserSerializer
+        return ListRetrieveUserSerializer  # self.serializer_class
 
-    @action(methods=('GET',), url_path='me', detail=False)
+    @action(
+        methods=('GET',),
+        url_path='me',
+        detail=False,
+        permission_classes=(IsAuthenticated,),
+    )
     def me(self, request):
-        user = get_object_or_404(User, username=request.user.username)
-
-        serializer = self.get_serializer(user, many=False)
+        current_user = get_object_or_404(User, username=request.user.username)
+        serializer = self.get_serializer(current_user, many=False)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(methods=('POST',), url_path='set_password', detail=False)
+    @action(
+        methods=('POST',),
+        url_path='set_password',
+        detail=False,
+        permission_classes=(IsAuthenticated,),
+    )
     def set_password(self, request):
-        user = get_object_or_404(User, username=request.user.username)
+        current_user = get_object_or_404(User, username=request.user.username)
         serializer = UserPasswordResetSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user.password = serializer.data['new_password']
-        user.save()
+        current_user.password = serializer.data['new_password']
+        current_user.save()
         return Response(status=status.HTTP_200_OK)
 
-    @action(methods=('GET',), url_path='subscriptions', detail=False)
+    @action(
+        methods=('GET',),
+        url_path='subscriptions',
+        detail=False,
+#        permission_classes=(IsAuthenticated,),
+    )
     def subscriptions(self, request):
         user = get_object_or_404(User, username=request.user.username)
         subscriptions = User.objects.filter(
@@ -114,6 +131,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = CustomPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('author', 'tags')
+    permission_classes = (NotAuthenticatedUsersListRetrieve,)
 
     def get_serializer_class(self):
         if self.action == ('list' or 'retrieve'):

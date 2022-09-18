@@ -31,6 +31,9 @@ class Recipe(models.Model):
     cooking_time = models.IntegerField()
     pub_date = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ['-pub_date']
+
     def __str__(self):
         return self.name
 
