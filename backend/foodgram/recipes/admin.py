@@ -1,8 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin
 
-from .models import Recipe, Tag, Ingredient, IngredientAmount
-from .models import FollowAuthor, FavoriteRecipe, Cart
+from .models import (
+    Recipe, Tag, Ingredient, IngredientAmount, FollowAuthor, FavoriteRecipe,
+    Cart
+)
 
 
 class Admin(admin.ModelAdmin):
@@ -30,8 +33,6 @@ class IngredientAdmin(Admin):
     list_filter = ('name',)
 
 
-admin.site.unregister(User)
-admin.site.register(User, Admin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Tag, Admin)
@@ -39,3 +40,5 @@ admin.site.register(IngredientAmount, Admin)
 admin.site.register(FollowAuthor, Admin)
 admin.site.register(FavoriteRecipe, Admin)
 admin.site.register(Cart, Admin)
+admin.site.unregister(User)
+admin.site.register(User, Admin)
