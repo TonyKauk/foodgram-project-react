@@ -26,10 +26,10 @@ from recipes.models import (
     Tag, Ingredient, Recipe, IngredientAmount, Cart,
     FavoriteRecipe, FollowAuthor
 )
-# from .permissions import (
-#     NotAuthenticatedUsersListRetrieve, NotAuthenticatedUsersPost,
-#     RecipeAuthorPatchDelete,
-# )
+from .permissions import (
+    RecipeGuest, RecipeAuthenticated, RecipeAuthor,
+    AuthorOrGetOrReadOnly,
+)
 from .serializers import (
     ListRetrieveUserSerializer, TagSerializer, IngredientSerializer,
     RecipeListRetrieveSerializer, UserSignUpSerializer,
@@ -80,7 +80,7 @@ class UserViewSet(ListRetrieveCreateViewSet):
         methods=('GET',),
         url_path='subscriptions',
         detail=False,
-#        permission_classes=(IsAuthenticated,),
+        permission_classes=(IsAuthenticated,),
     )
     def subscriptions(self, request):
         user = get_object_or_404(User, username=request.user.username)
@@ -109,7 +109,7 @@ class UserViewSet(ListRetrieveCreateViewSet):
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-    permission_classes = (IsAuthenticated,)
+#    permission_classes = (IsAuthenticated,)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -117,7 +117,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name',)
-    permission_classes = (IsAuthenticated,)
+#    permission_classes = (IsAuthenticated,)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -125,13 +125,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = CustomPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('author', 'tags')
+    permission_classes = (AuthorOrGetOrReadOnly,)
 #    permission_classes = [
-#        NotAuthenticatedUsersListRetrieve
-#        | (RecipeAuthorPatchDelete & IsAuthenticated)
+#        RecipeGuest
+#        | RecipeAuthenticated
+#        | RecipeAuthor
 #    ]
 
     def get_serializer_class(self):
-        if self.action == ('list' or 'retrieve'):
+        if self.action in ('list', 'retrieve'):
             return RecipeListRetrieveSerializer
         return RecipePostUpdateSerializer
 
@@ -165,7 +167,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(
        methods=('GET',),
        url_path='download_shopping_cart',
-       detail=False
+       detail=False,
+       permission_classes=(IsAuthenticated,),
     )
     def download_shopping_cart(self, request):
         ingredients = IngredientAmount.objects.filter(
@@ -192,22 +195,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'attachment; filename={0}'.format(filename)
         )
         return response
-
-##########################################################################################
-#        ingredients = RecipeIngredient.objects.filter(
-#            recipe__carts__user=request.user).values(
-#                'ingredient__name',
-#                'ingredient__measurement_unit'
-#        ).annotate(Sum('amount'))
-# 
-#        shop_list = 'Список покупок \n\n'
-#        for ingredient in ingredients:
-#            shop_list += (
-#                f"{ingredient['ingredient_name']} "
-#                f"({ingredient['ingredient_measurement_unit']}) - "
-#                f"{ingredient['amount__sum']}\n"            )
-#            return HttpResponse(shop_list, content_type='text/plain')
-##########################################################################################
 
 
 class CartViewSet(CreateDestroyViewSet):

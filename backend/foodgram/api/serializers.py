@@ -139,8 +139,6 @@ class RecipeListRetrieveSerializer(serializers.ModelSerializer):
     ingredients = IngredientAmountListRetrieveSerializer(read_only=True, many=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
-#    is_favorited = serializers.BooleanField()
-#    is_in_shopping_cart = serializers.BooleanField()
     image = Base64ImageField(required=False, allow_null=True)
 
     def get_is_favorited(self, recipe):
