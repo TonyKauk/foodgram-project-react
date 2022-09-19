@@ -127,6 +127,9 @@ class FollowAuthor(models.Model):
         verbose_name='Автор рецепта',
     )
 
+    def __str__(self):
+        return (f'{self.user.name} following {self.author.name}')
+
 
 class FavoriteRecipe(models.Model):
     user = models.ForeignKey(
