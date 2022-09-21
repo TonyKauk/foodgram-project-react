@@ -45,3 +45,7 @@ admin.site.register(FavoriteRecipe, Admin)
 admin.site.register(Cart, Admin)
 admin.site.unregister(User)
 admin.site.register(User, Admin)
+
+
+class UA(UserAdmin):
+    pass

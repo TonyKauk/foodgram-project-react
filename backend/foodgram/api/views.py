@@ -117,7 +117,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         current_user = self.request.user
         queryset = self.queryset
         is_favorited_filter = self.request.query_params.get('is_favorited')
-        is_in_shopping_cart_filter = self.request.query_params.get('is_in_shopping_cart')
+        is_in_shopping_cart_filter = self.request.query_params.get(
+            'is_in_shopping_cart'
+        )
 
         if is_favorited_filter is not None:
             if is_favorited_filter == '1':
