@@ -18,6 +18,9 @@ class Admin(admin.ModelAdmin):
     def has_module_permission(self, request):
         return True
 
+    def has_delete_permission(self, request, obj=None):
+        return True
+
 
 class RecipeAdmin(Admin):
     list_display = ('name', 'author', 'times_favorited')

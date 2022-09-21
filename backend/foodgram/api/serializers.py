@@ -1,14 +1,11 @@
-# import datetime as dt
 import base64
 
 from django.core.files.base import ContentFile
-from requests import request
 from rest_framework import serializers
-from django.shortcuts import get_object_or_404
 from recipes.models import (
     Tag, Ingredient, Recipe, IngredientAmount, FavoriteRecipe, Cart,
     )
-# from rest_framework.validators import UniqueValidator
+from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
 
 from users.models import User
 from recipes.models import FollowAuthor
@@ -48,7 +45,13 @@ class ListRetrieveUserSerializer(serializers.ModelSerializer):
 
 
 class UserSignUpSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True)
+    email = serializers.EmailField(
+        required=True,
+        validators=(UniqueValidator(queryset=User.objects.all()),),
+    )
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    password = serializers.CharField(write_only=True, required=True)
     id = serializers.CharField(read_only=True)
 
     class Meta:
@@ -61,11 +64,25 @@ class UserSignUpSerializer(serializers.ModelSerializer):
             'password',
             'id',
         ]
+        required = [
+            'email',
+            'username',
+            'first_name',
+            'last_name',
+            'password',
+        ]
+
+    def validate_username(self, value):
+        if value == 'DELETED_USER':
+            raise serializers.ValidationError(
+                'Никнейм "DELETED_USER" запрещен.'
+            )
+        return value
 
 
 class UserPasswordResetSerializer(serializers.Serializer):
-    new_password = serializers.CharField(max_length=200)
-    current_password = serializers.CharField(max_length=200)
+    new_password = serializers.CharField(max_length=200, required=True)
+    current_password = serializers.CharField(max_length=200, required=True)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -136,7 +153,10 @@ class IngredientAmountCreateUpdateSerializer(serializers.ModelSerializer):
 class RecipeListRetrieveSerializer(serializers.ModelSerializer):
     tags = TagSerializer(read_only=True, many=True)
     author = ListRetrieveUserSerializer(read_only=True, many=False)
-    ingredients = IngredientAmountListRetrieveSerializer(read_only=True, many=True)
+    ingredients = IngredientAmountListRetrieveSerializer(
+        read_only=True,
+        many=True,
+    )
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = Base64ImageField(required=False, allow_null=True)
@@ -179,19 +199,30 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
     tags = serializers.PrimaryKeyRelatedField(
         many=True,
         read_only=False,
-        queryset=Tag.objects.all()
+        queryset=Tag.objects.all(),
+        required=True,
     )
     ingredients = IngredientAmountCreateUpdateSerializer(
         read_only=False,
         many=True,
+        required=True,
     )
     image = Base64ImageField(required=True, allow_null=True)
+    name = serializers.CharField(required=True)
+    text = serializers.CharField(required=True)
+    cooking_time = serializers.IntegerField(required=True)
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+        default=serializers.CurrentUserDefault()
+    )
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         author = self.context['request'].user
-        recipe = Recipe.objects.create(**validated_data, author=author)
+        validated_data['author'] = author
+        recipe = Recipe.objects.create(**validated_data)
 
         for tag in tags:
             recipe.tags.add(tag)
@@ -232,7 +263,21 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
             'image',
             'text',
             'cooking_time',
+            'author',
         ]
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Recipe.objects.all(),
+                fields=['name', 'author']
+            )
+        ]
+
+    def validate_cooking_time(self, value):
+        if value < 1:
+            raise serializers.ValidationError(
+                'Время приготовления должно быть как минимум 1 минута'
+            )
+        return value
 
 
 class RecipePostToCartSerializer(serializers.ModelSerializer):
@@ -266,7 +311,9 @@ class FollowAuthorSerializer(serializers.ModelSerializer):
         ).exists()
 
     def get_recipes(self, user):
-        recipes_limit = self.context.get('request').query_params.get('recipes_limit')
+        recipes_limit = self.context.get('request').query_params.get(
+            'recipes_limit'
+        )
         recipes = Recipe.objects.filter(author=user)
 
         if recipes_limit is not None:
@@ -296,215 +343,3 @@ class FollowAuthorSerializer(serializers.ModelSerializer):
             'recipes',
             'recipes_count',
         ]
-
-# ########################################################################
-# class UserListRetrieveSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = User
-#         fields = [
-#             'email',
-#             'id',
-#             'username',
-#             'first_name',
-#             'last_name',
-# #            'is_subscribed',
-#         ]
-# 
-# 
-# class SignupSerializer(serializers.Serializer):
-#     email = serializers.EmailField(
-#         validators=(UniqueValidator(queryset=User.objects.all()),)
-#     )
-#     username = serializers.CharField(
-#         validators=(UniqueValidator(queryset=User.objects.all()),)
-#     )
-#     first_name = serializers.CharField(max_length=150)
-#     last_name = serializers.CharField(max_length=150)
-# 
-#     class Meta:
-#         model = User
-#         fields = (
-#             'username',
-#             'email',
-#         )
-# 
-# 
-# class UserPasswordResetSerializer(serializers.Serializer):
-#     new_password = serializers.CharField(max_length=200)
-#     current_password = serializers.CharField(max_length=200)
-# 
-# 
-# class TokenSerializer(serializers.Serializer):
-#     password = serializers.CharField(max_length=200)
-#     email = serializers.EmailField(max_length=100)
-# ########################################################################
-
-# class TokenSerializer(serializers.Serializer):
-#     username = serializers.CharField()
-#     confirmation_code = serializers.CharField(max_length=100)
-# 
-#     class Meta:
-#         model = User
-#         fields = (
-#             'username',
-#             'confirmation_code',
-#         )
-
-
-# class SignupSerializer(serializers.Serializer):
-#     username = serializers.CharField(
-#         validators=(UniqueValidator(queryset=User.objects.all()),)
-#     )
-#     email = serializers.EmailField(
-#         validators=(UniqueValidator(queryset=User.objects.all()),)
-#     )
-# 
-#     class Meta:
-#         model = User
-#         fields = (
-#             'username',
-#             'email',
-#         )
-# 
-#     def validate_username(self, value):
-#         if value == 'me':
-#             raise serializers.ValidationError(
-#                 'Никнейм "me" запрещен.'
-#             )
-#         return value
-# 
-# 
-# class TokenSerializer(serializers.Serializer):
-#     username = serializers.CharField()
-#     confirmation_code = serializers.CharField(max_length=100)
-# 
-#     class Meta:
-#         model = User
-#         fields = (
-#             'username',
-#             'confirmation_code',
-#         )
-# 
-# 
-# class CategorySerializer(serializers.ModelSerializer):
-# 
-#     class Meta:
-#         fields = (
-#             'name',
-#             'slug'
-#         )
-#         lookup_field = 'slug'
-#         model = Category
-# 
-# 
-# class GenreSerializer(serializers.ModelSerializer):
-# 
-#     class Meta:
-#         fields = (
-#             'name',
-#             'slug',
-#         )
-#         lookup_field = 'slug'
-#         model = Genre
-# 
-# 
-# def validate_year(value):
-#     if value > dt.datetime.now().year:
-#         raise serializers.ValidationError(
-#             'Год выпуска не может быть больше текущего'
-#         )
-#     return value
-# 
-# 
-# class TitleGetSerializer(serializers.ModelSerializer):
-#     description = serializers.CharField(required=False)
-#     year = serializers.IntegerField(validators=[validate_year])
-#     genre = GenreSerializer(many=True, read_only=True)
-#     category = CategorySerializer()
-#     rating = serializers.IntegerField(
-#         source='reviews__score__avg',
-#         read_only=True
-#     )
-# 
-#     class Meta:
-#         fields = (
-#             'id',
-#             'name',
-#             'year',
-#             'rating',
-#             'description',
-#             'genre',
-#             'category',
-#         )
-#         model = Title
-# 
-# 
-# class TitleSerializer(serializers.ModelSerializer):
-#     description = serializers.CharField(required=False)
-#     year = serializers.IntegerField(validators=[validate_year])
-#     genre = serializers.SlugRelatedField(
-#         many=True,
-#         slug_field='slug',
-#         queryset=Genre.objects.all()
-#     )
-#     category = serializers.SlugRelatedField(
-#         slug_field='slug',
-#         queryset=Category.objects.all()
-#     )
-# 
-#     class Meta:
-#         fields = (
-#             'id',
-#             'name',
-#             'year',
-#             'description',
-#             'genre',
-#             'category',
-#         )
-#         model = Title
-# 
-# 
-# class CommentSerializer(serializers.ModelSerializer):
-#     author = serializers.SlugRelatedField(
-#         slug_field='username',
-#         read_only=True,
-#         default=serializers.CurrentUserDefault()
-#     )
-# 
-#     class Meta:
-#         model = Comment
-#         fields = ('id', 'text', 'author', 'pub_date')
-# 
-# 
-# class ReviewSerializer(serializers.ModelSerializer):
-#     author = serializers.SlugRelatedField(
-#         many=False,
-#         read_only=True,
-#         slug_field='username',
-#         default=serializers.CurrentUserDefault(),
-#     )
-# 
-#     class Meta:
-#         model = Review
-#         fields = ('id', 'text', 'author', 'score', 'pub_date')
-#         read_only_fields = ('id', 'author', 'pub_date')
-# 
-#     def validate_score(self, value):
-#         if value < 1 or value > 10:
-#             raise serializers.ValidationError(
-#                 'Пожалуйста, только целые числа от 1 до 10'
-#             )
-#         return value
-# 
-#     def validate(self, data):
-#         title_id = self.context['view'].kwargs.get('title_id')
-#         author = self.context.get('request').user
-#         title = get_object_or_404(Title, id=title_id)
-#         if title.reviews.filter(author=author).exists() and (
-#             self.context.get('request').method == 'POST'
-#         ):
-#             raise serializers.ValidationError(
-#                 'Вы уже оставляли здесь отзыв. До новых встреч.'
-#             )
-#         return data
-# 
