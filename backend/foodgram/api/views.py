@@ -92,6 +92,7 @@ class UserViewSet(ListRetrieveCreateViewSet):
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
+#    permission_classes = (AllowAny,)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -99,14 +100,16 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name',)
+#    permission_classes = (AllowAny,)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     pagination_class = CustomPagination
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('author', 'tags')
+    filterset_fields = ('author',)
     permission_classes = (AuthorOrGetOrReadOnly,)
+#    permission_classes = (AllowAny,)
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -119,6 +122,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         is_favorited_filter = self.request.query_params.get('is_favorited')
         is_in_shopping_cart_filter = self.request.query_params.get(
             'is_in_shopping_cart'
+        )
+        tags_filter = is_in_shopping_cart_filter = self.request.query_params.get(
+            'tags'
         )
 
         if is_favorited_filter is not None:
@@ -140,6 +146,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 queryset = queryset.exclude(
                     added_to_cart__user=current_user,
                 )
+
+        if tags_filter is not None:
+            queryset = queryset.filter(
+                tags__slug=tags_filter
+            )
+
         return queryset
 
     @action(

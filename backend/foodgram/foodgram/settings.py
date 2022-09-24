@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'recipes.apps.RecipesConfig',
     'users.apps.UsersConfig',
     'api.apps.ApiConfig',
+    'rest_framework.authtoken',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,13 +45,14 @@ INSTALLED_APPS = [
     'colorfield',
     'rest_framework',
     'django_filters',
-    'rest_framework.authtoken',
     'djoser',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -149,4 +151,25 @@ DJOSER = {
     'LOGIN_FIELD': 'email',
 }
 
+
+DJOSER = {
+    'HIDE_USERS': False,
+    'LOGIN_FIELD': 'email',
+#     'SERIALIZERS': {
+#         'user': 'api.serializers.CustomUserSerializer',
+#         'user_create': 'api.serializers.CustomUserCreateSerializer',
+#         'current_user': 'api.serializers.CustomUserSerializer',
+#     },
+#     'PERMISSIONS': {
+#         'user_list': ('rest_framework.permissions.AllowAny',),
+#         'user': ('rest_framework.permissions.AllowAny',),
+#     },
+}
+
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+# CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+]
+CORS_URLS_REGEX = r'^/api/.*$'
