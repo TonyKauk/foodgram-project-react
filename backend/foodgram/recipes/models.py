@@ -33,7 +33,7 @@ class Recipe(models.Model):
         verbose_name='Название рецепта',
     )
     image = models.ImageField(
-        upload_to='recipes/',
+        upload_to='recipes/image',
         verbose_name='Фото рецепта',
     )
     text = models.TextField(verbose_name='Описание рецепта')
@@ -151,13 +151,13 @@ class Cart(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='added_to_cart',
+        related_name='user_added_to_cart',
         verbose_name='Покупатель',
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='added_to_cart',
+        related_name='recipe_added_to_cart',
         verbose_name='Рецепт',
     )
 

@@ -92,7 +92,7 @@ class UserViewSet(ListRetrieveCreateViewSet):
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
-#    permission_classes = (AllowAny,)
+    permission_classes = (AllowAny,)
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -100,7 +100,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = IngredientSerializer
     filter_backends = (filters.SearchFilter,)
     search_fields = ('^name',)
-#    permission_classes = (AllowAny,)
+    permission_classes = (AllowAny,)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -109,7 +109,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ('author',)
     permission_classes = (AuthorOrGetOrReadOnly,)
-#    permission_classes = (AllowAny,)
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -161,8 +160,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
        permission_classes=(IsAuthenticated,),
     )
     def download_shopping_cart(self, request):
+        user_id = request.user.id
         ingredients = IngredientAmount.objects.filter(
-            recipes__cart__user=request.user).values(
+            recipes__recipe_added_to_cart__user=user_id).values(
                 'name__name',
                 'name__measurement_unit'
             ).annotate(Sum('amount'))

@@ -142,6 +142,8 @@ REST_FRAMEWORK = {
     'SEARCH_PARAM': 'name',
 }
 
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -155,15 +157,15 @@ DJOSER = {
 DJOSER = {
     'HIDE_USERS': False,
     'LOGIN_FIELD': 'email',
-#     'SERIALIZERS': {
-#         'user': 'api.serializers.CustomUserSerializer',
-#         'user_create': 'api.serializers.CustomUserCreateSerializer',
-#         'current_user': 'api.serializers.CustomUserSerializer',
-#     },
-#     'PERMISSIONS': {
-#         'user_list': ('rest_framework.permissions.AllowAny',),
-#         'user': ('rest_framework.permissions.AllowAny',),
-#     },
+#    'SERIALIZERS': {
+#        'user': 'api.serializers.ListRetrieveUserSerializer',
+#        'user_create': 'api.serializers.ListRetrieveUserSerializer',
+#        'current_user': 'api.serializers.ListRetrieveUserSerializer',
+#    },
+#    'PERMISSIONS': {
+#        'user_list': ('rest_framework.permissions.AllowAny',),
+#        'user': ('rest_framework.permissions.AllowAny',),
+#    },
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
