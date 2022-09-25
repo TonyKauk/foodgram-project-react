@@ -122,9 +122,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         is_in_shopping_cart_filter = self.request.query_params.get(
             'is_in_shopping_cart'
         )
-        tags_filter = is_in_shopping_cart_filter = self.request.query_params.get(
-            'tags'
-        )
+        tags_filter = self.request.query_params.get('tags')
 
         if is_favorited_filter is not None:
             if is_favorited_filter == '1':
@@ -139,11 +137,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if is_in_shopping_cart_filter is not None:
             if is_in_shopping_cart_filter == '1':
                 queryset = queryset.filter(
-                    added_to_cart__user=current_user,
+                    recipe_added_to_cart__user=current_user,
                 )
             else:
                 queryset = queryset.exclude(
-                    added_to_cart__user=current_user,
+                    recipe_added_to_cart__user=current_user,
                 )
 
         if tags_filter is not None:
@@ -167,7 +165,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 'name__measurement_unit'
             ).annotate(Sum('amount'))
 
-        list_of_ingredients = 'List of Ingredients \n\n'
+        list_of_ingredients = 'Список ингредиентов \n\n'
         for ingredient in ingredients:
             values = list(ingredient.values())
             list_of_ingredients += (
@@ -176,7 +174,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 f'{values[2]}\n'
             )
 
-        filename = 'ingredients.txt'
+        filename = 'list_of_ingredients.txt'
         response = HttpResponse(
             list_of_ingredients,
             content_type='text/plain; charset=UTF-8',
