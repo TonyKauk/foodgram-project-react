@@ -4,7 +4,6 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 
-
 from .functions import get_or_create_deleted_user
 
 User = get_user_model()

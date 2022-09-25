@@ -2,13 +2,13 @@ import base64
 
 from django.core.files.base import ContentFile
 from rest_framework import serializers
-from recipes.models import (
-    Tag, Ingredient, Recipe, IngredientAmount, FavoriteRecipe, Cart,
-    )
 from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
 
+from recipes.models import (
+    Tag, Ingredient, Recipe, IngredientAmount, FavoriteRecipe, Cart,
+    FollowAuthor,
+    )
 from users.models import User
-from recipes.models import FollowAuthor
 
 
 class Base64ImageField(serializers.ImageField):

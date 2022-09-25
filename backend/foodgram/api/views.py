@@ -1,14 +1,14 @@
 from django.shortcuts import HttpResponse
 from django.db.models import Sum
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from .pagination import CustomPagination
-from django_filters.rest_framework import DjangoFilterBackend
 
 from .mixins import CreateDestroyViewSet, ListRetrieveCreateViewSet
+from .pagination import CustomPagination
 from recipes.models import (
     Tag, Ingredient, Recipe, IngredientAmount, Cart, FavoriteRecipe,
     FollowAuthor,
