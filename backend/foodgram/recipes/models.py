@@ -1,19 +1,19 @@
 from colorfield.fields import ColorField
-from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
+from django.db import models
 
-from .functions import get_or_create_deleted_user
+# from .functions import get_or_create_deleted_user
 
 User = get_user_model()
-deleted_user_id = get_or_create_deleted_user
+# deleted_user_id = get_or_create_deleted_user
 
-MINIMUM_COOKING_TIME = 1
+# MINIMUM_COOKING_TIME = 1
 
 
 def validate_cooking_time(value):
-    if value < MINIMUM_COOKING_TIME:
+    if value < 1:
         raise ValidationError(
             'Время приготовления должно быть не меньше 1 минуты'
         )
@@ -23,7 +23,7 @@ def validate_cooking_time(value):
 class Recipe(models.Model):
     author = models.ForeignKey(
         User,
-        on_delete=models.SET(deleted_user_id),
+        on_delete=models.CASCADE,
         related_name='recipes',
         verbose_name='Автор рецепта',
     )

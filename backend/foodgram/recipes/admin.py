@@ -1,11 +1,10 @@
 from django.contrib import admin
-from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
 
-from .models import (
-    Recipe, Tag, Ingredient, IngredientAmount, FollowAuthor, FavoriteRecipe,
-    Cart
-)
+# from users.models import User
+from .models import (Cart, FavoriteRecipe, FollowAuthor, Ingredient,
+                     IngredientAmount, Recipe, Tag)
 
 
 class Admin(admin.ModelAdmin):
@@ -27,8 +26,7 @@ class RecipeAdmin(Admin):
     list_filter = ('name', 'author', 'tags')
 
     def times_favorited(self, object):
-        result = object.added_to_favorite.count()
-        return result
+        return object.added_to_favorite.count()
 
 
 class IngredientAdmin(Admin):
@@ -36,6 +34,8 @@ class IngredientAdmin(Admin):
     list_filter = ('name',)
 
 
+admin.site.unregister(User)
+admin.site.register(User, Admin)
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Tag, Admin)
@@ -43,9 +43,3 @@ admin.site.register(IngredientAmount, Admin)
 admin.site.register(FollowAuthor, Admin)
 admin.site.register(FavoriteRecipe, Admin)
 admin.site.register(Cart, Admin)
-admin.site.unregister(User)
-admin.site.register(User, Admin)
-
-
-class UA(UserAdmin):
-    pass

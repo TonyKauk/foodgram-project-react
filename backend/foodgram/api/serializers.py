@@ -2,12 +2,10 @@ import base64
 
 from django.core.files.base import ContentFile
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator, UniqueTogetherValidator
+from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
 
-from recipes.models import (
-    Tag, Ingredient, Recipe, IngredientAmount, FavoriteRecipe, Cart,
-    FollowAuthor,
-    )
+from recipes.models import (Cart, FavoriteRecipe, FollowAuthor, Ingredient,
+                            IngredientAmount, Recipe, Tag)
 from users.models import User
 
 
@@ -16,21 +14,12 @@ class Base64ImageField(serializers.ImageField):
         if isinstance(data, str) and data.startswith('data:image'):
             format, imgstr = data.split(';base64,')
             ext = format.split('/')[-1]
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
+            data = ContentFile(base64.b64decode(imgstr), name=f'temp.{ext}')
         return super().to_internal_value(data)
 
 
 class ListRetrieveUserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
-
-    def get_is_subscribed(self, user):
-        if self.context['request'].auth is None:
-            return False
-        current_user = self.context['request'].user
-        return FollowAuthor.objects.filter(
-            user=current_user,
-            author=user,
-        ).exists()
 
     class Meta:
         model = User
@@ -42,6 +31,15 @@ class ListRetrieveUserSerializer(serializers.ModelSerializer):
             'last_name',
             'is_subscribed',
         ]
+
+    def get_is_subscribed(self, user):
+        if self.context['request'].auth is None:
+            return False
+        current_user = self.context['request'].user
+        return FollowAuthor.objects.filter(
+            user=current_user,
+            author=user,
+        ).exists()
 
 
 class UserSignUpSerializer(serializers.ModelSerializer):
@@ -64,20 +62,6 @@ class UserSignUpSerializer(serializers.ModelSerializer):
             'password',
             'id',
         ]
-        required = [
-            'email',
-            'username',
-            'first_name',
-            'last_name',
-            'password',
-        ]
-
-    def validate_username(self, value):
-        if value == 'DELETED_USER':
-            raise serializers.ValidationError(
-                'Никнейм "DELETED_USER" запрещен.'
-            )
-        return value
 
 
 class UserPasswordResetSerializer(serializers.Serializer):
@@ -109,20 +93,15 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientAmountListRetrieveSerializer(serializers.ModelSerializer):
-    id = serializers.SerializerMethodField()
+    id = serializers.IntegerField(source='name.id')
     name = serializers.SlugRelatedField(
         slug_field='name',
         read_only=True,
     )
-    measurement_unit = serializers.SerializerMethodField(read_only=True)
-
-    def get_id(self, ingredientamount):
-        ingredient_id = ingredientamount.name.id
-        return ingredient_id
-
-    def get_measurement_unit(self, ingredientamount):
-        ingredient_unit = ingredientamount.name.measurement_unit
-        return ingredient_unit
+    measurement_unit = serializers.CharField(
+        source='name.measurement_unit',
+        read_only=True,
+    )
 
     class Meta:
         model = IngredientAmount
@@ -161,6 +140,21 @@ class RecipeListRetrieveSerializer(serializers.ModelSerializer):
     is_in_shopping_cart = serializers.SerializerMethodField()
     image = Base64ImageField(required=False, allow_null=True)
 
+    class Meta:
+        model = Recipe
+        fields = [
+            'id',
+            'tags',
+            'author',
+            'ingredients',
+            'is_favorited',
+            'is_in_shopping_cart',
+            'name',
+            'image',
+            'text',
+            'cooking_time',
+        ]
+
     def get_is_favorited(self, recipe):
         if self.context['request'].auth is None:
             return False
@@ -178,21 +172,6 @@ class RecipeListRetrieveSerializer(serializers.ModelSerializer):
             user=user,
             recipe=recipe,
         ).exists()
-
-    class Meta:
-        model = Recipe
-        fields = [
-            'id',
-            'tags',
-            'author',
-            'ingredients',
-            'is_favorited',
-            'is_in_shopping_cart',
-            'name',
-            'image',
-            'text',
-            'cooking_time',
-        ]
 
 
 class RecipePostUpdateSerializer(serializers.ModelSerializer):
@@ -216,6 +195,24 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
         read_only=True,
         default=serializers.CurrentUserDefault()
     )
+
+    class Meta:
+        model = Recipe
+        fields = [
+            'tags',
+            'ingredients',
+            'name',
+            'image',
+            'text',
+            'cooking_time',
+            'author',
+        ]
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Recipe.objects.all(),
+                fields=['name', 'author']
+            )
+        ]
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
@@ -254,24 +251,6 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
             recipe.ingredients.add(ingredient_amount.id)
         return recipe
 
-    class Meta:
-        model = Recipe
-        fields = [
-            'tags',
-            'ingredients',
-            'name',
-            'image',
-            'text',
-            'cooking_time',
-            'author',
-        ]
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Recipe.objects.all(),
-                fields=['name', 'author']
-            )
-        ]
-
     def validate_cooking_time(self, value):
         if value < 1:
             raise serializers.ValidationError(
@@ -302,6 +281,19 @@ class FollowAuthorSerializer(serializers.ModelSerializer):
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
 
+    class Meta:
+        model = User
+        fields = [
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+            'recipes',
+            'recipes_count',
+        ]
+
     def get_is_subscribed(self, user):
         current_user = self.context['request'].user
         author = user
@@ -330,16 +322,3 @@ class FollowAuthorSerializer(serializers.ModelSerializer):
         author = User.objects.get(id=user.id)
         count = Recipe.objects.filter(author=author).count()
         return count
-
-    class Meta:
-        model = User
-        fields = [
-            'email',
-            'id',
-            'username',
-            'first_name',
-            'last_name',
-            'is_subscribed',
-            'recipes',
-            'recipes_count',
-        ]

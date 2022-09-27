@@ -1,26 +1,24 @@
-from django.shortcuts import HttpResponse
 from django.db.models import Sum
-from django.shortcuts import get_object_or_404
+from django.shortcuts import HttpResponse, get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+from recipes.models import (Cart, FavoriteRecipe, FollowAuthor, Ingredient,
+                            Recipe, Tag)
+from users.models import User
+from .functions import create_list_of_ingredients
 from .mixins import CreateDestroyViewSet, ListRetrieveCreateViewSet
 from .pagination import CustomPagination
-from recipes.models import (
-    Tag, Ingredient, Recipe, IngredientAmount, Cart, FavoriteRecipe,
-    FollowAuthor,
-)
 from .permissions import AuthorOrGetOrReadOnly
-from .serializers import (
-    ListRetrieveUserSerializer, TagSerializer, IngredientSerializer,
-    RecipeListRetrieveSerializer, UserSignUpSerializer,
-    UserPasswordResetSerializer, RecipePostUpdateSerializer,
-    RecipePostToCartSerializer, FollowAuthorSerializer,
-    )
-from users.models import User
+from .serializers import (FollowAuthorSerializer, IngredientSerializer,
+                          ListRetrieveUserSerializer,
+                          RecipeListRetrieveSerializer,
+                          RecipePostToCartSerializer,
+                          RecipePostUpdateSerializer, TagSerializer,
+                          UserPasswordResetSerializer, UserSignUpSerializer)
 
 
 class UserViewSet(ListRetrieveCreateViewSet):
@@ -122,9 +120,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
         is_in_shopping_cart_filter = self.request.query_params.get(
             'is_in_shopping_cart'
         )
-        tags_filter = self.request.query_params.get('tags')
+        tags_filter = self.request.query_params.getlist('tags')
 
-        if is_favorited_filter is not None:
+        if is_favorited_filter:
             if is_favorited_filter == '1':
                 queryset = queryset.filter(
                     added_to_favorite__user=current_user,
@@ -134,7 +132,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     added_to_favorite__user=current_user,
                 )
 
-        if is_in_shopping_cart_filter is not None:
+        if is_in_shopping_cart_filter:
             if is_in_shopping_cart_filter == '1':
                 queryset = queryset.filter(
                     recipe_added_to_cart__user=current_user,
@@ -144,10 +142,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     recipe_added_to_cart__user=current_user,
                 )
 
-        if tags_filter is not None:
+        if len(tags_filter) >= 0 and is_in_shopping_cart_filter is None:
             queryset = queryset.filter(
-                tags__slug=tags_filter
-            )
+                tags__slug__in=tags_filter
+            ).distinct()
 
         return queryset
 
@@ -159,20 +157,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         user_id = request.user.id
-        ingredients = IngredientAmount.objects.filter(
-            recipes__recipe_added_to_cart__user=user_id).values(
-                'name__name',
-                'name__measurement_unit'
-            ).annotate(Sum('amount'))
-
-        list_of_ingredients = 'Список ингредиентов \n\n'
-        for ingredient in ingredients:
-            values = list(ingredient.values())
-            list_of_ingredients += (
-                f'{values[0]} '
-                f'({values[1]}) - '
-                f'{values[2]}\n'
-            )
+        list_of_ingredients = create_list_of_ingredients(user_id=user_id)
 
         filename = 'list_of_ingredients.txt'
         response = HttpResponse(
@@ -192,8 +177,7 @@ class CartViewSet(CreateDestroyViewSet):
     def create(self, request, **kwargs):
         recipe_id = kwargs.get('recipe_id')
         recipe = Recipe.objects.get(id=recipe_id)
-        user = request.user
-        Cart.objects.create(user=user, recipe=recipe)
+        Cart.objects.create(user=request.user, recipe=recipe)
         data = self.serializer_class(recipe).data
         return Response(data, status=status.HTTP_200_OK)
 
