@@ -1,15 +1,9 @@
 from colorfield.fields import ColorField
-from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 
-# from .functions import get_or_create_deleted_user
-
-User = get_user_model()
-# deleted_user_id = get_or_create_deleted_user
-
-# MINIMUM_COOKING_TIME = 1
+from users.models import User
 
 
 def validate_cooking_time(value):
@@ -102,30 +96,12 @@ class IngredientAmount(models.Model):
         related_name='ingredient_amount',
         verbose_name='Название ингредиента',
     )
-    amount = models.IntegerField(verbose_name='Количество')
+    amount = models.PositiveIntegerField(verbose_name='Количество')
 
     def __str__(self):
         return (
             f'{self.name.name} - {self.amount}, {self.name.measurement_unit}'
         )
-
-
-class FollowAuthor(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='follower',
-        verbose_name='Подписчик',
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='following',
-        verbose_name='Автор рецепта',
-    )
-
-    def __str__(self):
-        return (f'{self.user.username} following {self.author.username}')
 
 
 class FavoriteRecipe(models.Model):

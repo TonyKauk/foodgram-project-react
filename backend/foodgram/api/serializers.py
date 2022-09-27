@@ -4,9 +4,9 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
 
-from recipes.models import (Cart, FavoriteRecipe, FollowAuthor, Ingredient,
+from recipes.models import (Cart, FavoriteRecipe, Ingredient,
                             IngredientAmount, Recipe, Tag)
-from users.models import User
+from users.models import FollowAuthor, User
 
 
 class Base64ImageField(serializers.ImageField):
