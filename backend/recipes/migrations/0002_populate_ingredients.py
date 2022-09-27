@@ -10,7 +10,7 @@ from recipes.models import Ingredient
 def copy_ingredients(apps, schema_editor):
     path = os.path.join(
         os.path.dirname(__file__),
-        '..', '..', '..', '..',
+        '..', '..', '..',
         'data', 'ingredients.csv'
     )
     temp_pk = 0
