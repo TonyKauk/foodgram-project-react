@@ -4,8 +4,9 @@ from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
 
-from recipes.models import (Cart, FavoriteRecipe, Ingredient,
-                            IngredientAmount, Recipe, Tag)
+from recipes.models import (
+    Cart, FavoriteRecipe, Ingredient, IngredientAmount, Recipe, Tag,
+)
 from users.models import FollowAuthor, User
 
 

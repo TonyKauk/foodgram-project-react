@@ -6,19 +6,20 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from recipes.models import (Cart, FavoriteRecipe, Ingredient,
-                            Recipe, Tag)
+from recipes.models import (
+    Cart, FavoriteRecipe, Ingredient, Recipe, Tag
+)
 from users.models import FollowAuthor, User
 from .functions import create_list_of_ingredients
 from .mixins import CreateDestroyViewSet, ListRetrieveCreateViewSet
 from .pagination import CustomPagination
 from .permissions import AuthorOrGetOrReadOnly
-from .serializers import (FollowAuthorSerializer, IngredientSerializer,
-                          ListRetrieveUserSerializer,
-                          RecipeListRetrieveSerializer,
-                          RecipePostToCartSerializer,
-                          RecipePostUpdateSerializer, TagSerializer,
-                          UserPasswordResetSerializer, UserSignUpSerializer)
+from .serializers import (
+    FollowAuthorSerializer, IngredientSerializer, ListRetrieveUserSerializer,
+    RecipeListRetrieveSerializer, RecipePostToCartSerializer,
+    RecipePostUpdateSerializer, TagSerializer, UserPasswordResetSerializer,
+    UserSignUpSerializer,
+)
 
 
 class UserViewSet(ListRetrieveCreateViewSet):
