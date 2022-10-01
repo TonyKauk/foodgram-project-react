@@ -1,4 +1,3 @@
-from django.db.models import Sum
 from django.shortcuts import HttpResponse, get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
@@ -10,6 +9,7 @@ from recipes.models import (
     Cart, FavoriteRecipe, Ingredient, Recipe, Tag
 )
 from users.models import FollowAuthor, User
+from .filters import ResipesFilter
 from .functions import create_list_of_ingredients
 from .mixins import CreateDestroyViewSet, ListRetrieveCreateViewSet
 from .pagination import CustomPagination
@@ -106,49 +106,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     pagination_class = CustomPagination
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('author',)
+    filterset_class = ResipesFilter
     permission_classes = (AuthorOrGetOrReadOnly,)
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return RecipeListRetrieveSerializer
         return RecipePostUpdateSerializer
-
-    def get_queryset(self):
-        current_user = self.request.user
-        queryset = self.queryset
-        is_favorited_filter = self.request.query_params.get('is_favorited')
-        is_in_shopping_cart_filter = self.request.query_params.get(
-            'is_in_shopping_cart'
-        )
-        tags_filter = self.request.query_params.getlist('tags')
-
-        if is_favorited_filter:
-            if is_favorited_filter == '1':
-                queryset = queryset.filter(
-                    added_to_favorite__user=current_user,
-                )
-            else:
-                queryset = queryset.exclude(
-                    added_to_favorite__user=current_user,
-                )
-
-        if is_in_shopping_cart_filter:
-            if is_in_shopping_cart_filter == '1':
-                queryset = queryset.filter(
-                    recipe_added_to_cart__user=current_user,
-                )
-            else:
-                queryset = queryset.exclude(
-                    recipe_added_to_cart__user=current_user,
-                )
-
-        if len(tags_filter) >= 0 and is_in_shopping_cart_filter is None:
-            queryset = queryset.filter(
-                tags__slug__in=tags_filter
-            ).distinct()
-
-        return queryset
 
     @action(
        methods=('GET',),

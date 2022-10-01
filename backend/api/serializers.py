@@ -187,7 +187,7 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
         many=True,
         required=True,
     )
-    image = Base64ImageField(required=True, allow_null=True)
+    image = Base64ImageField(required=True)
     name = serializers.CharField(required=True)
     text = serializers.CharField(required=True)
     cooking_time = serializers.IntegerField(required=True)
@@ -238,8 +238,7 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
         tags_list = validated_data.pop('tags')
         ingredients_list = validated_data.pop('ingredients')
 
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
+        super().update(instance, validated_data)
         recipe = instance
 
         recipe.tags.set(tags_list)
@@ -250,6 +249,7 @@ class RecipePostUpdateSerializer(serializers.ModelSerializer):
                 **ingredient
             )
             recipe.ingredients.add(ingredient_amount.id)
+        recipe.save()
         return recipe
 
     def validate_cooking_time(self, value):
