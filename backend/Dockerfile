@@ -1,8 +1,9 @@
 FROM python:3.8-slim
 
-WORKDIR /app
+COPY /backend /app
+COPY /data/ingredients.csv /data
 
-COPY ../ ./
+WORKDIR /app
 
 RUN python -m pip install --upgrade pip
 RUN pip3 install -r /app/requirements.txt --no-cache-dir
