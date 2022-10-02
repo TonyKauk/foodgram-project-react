@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   tests:
-    name: Testing sccording to flake8
+    name: Testing according to flake8
     runs-on: ubuntu-latest
 
     steps:
