@@ -171,4 +171,4 @@ ehthumbs.db
 Thumbs.db
 
 # DB dump
-./data/dump.json
+db_dump_021022.json
