@@ -132,7 +132,7 @@ dmypy.json
 .idea
 
 # .env
-backend/foodgram/foodgram/.env
+# backend/foodgram/foodgram/.env
 
 # media
 media/
@@ -170,5 +170,5 @@ media/
 ehthumbs.db
 Thumbs.db
 
-DB damp
-data/dump.json
+# DB dump
+../data/dump.json
