@@ -169,3 +169,6 @@ media/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+DB damp
+data/dump.json
