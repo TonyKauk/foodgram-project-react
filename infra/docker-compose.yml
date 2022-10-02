@@ -2,25 +2,21 @@ version: '3.3'
 services:
 
   db:
-    image: postgres:14.5-alpine
+    image: postgres:13.3-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
-      - ../backend/foodgram/.env
+      - ./.env
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: tonykauk/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
     depends_on:
       - db
 
   backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: tonykauk/foodgram_backend:latest
     restart: always
     volumes:
       - static_value:/app/static/
@@ -28,7 +24,7 @@ services:
     depends_on:
       - frontend
     env_file:
-      - ../backend/foodgram/.env
+      - ./.env
 
   nginx:
     image: nginx:1.19.3
