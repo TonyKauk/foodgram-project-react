@@ -115,10 +115,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return RecipePostUpdateSerializer
 
     @action(
-       methods=('GET',),
-       url_path='download_shopping_cart',
-       detail=False,
-       permission_classes=(IsAuthenticated,),
+        methods=('GET',),
+        url_path='download_shopping_cart',
+        detail=False,
+        permission_classes=(IsAuthenticated,),
     )
     def download_shopping_cart(self, request):
         user_id = request.user.id

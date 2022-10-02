@@ -8,7 +8,7 @@ def create_list_of_ingredients(user_id):
         recipes__recipe_added_to_cart__user=user_id).values(
             'name__name',
             'name__measurement_unit'
-        ).annotate(Sum('amount'))
+    ).annotate(Sum('amount'))
     list_of_ingredients = 'Список ингредиентов: \n\n'
     for ingredient in ingredients:
         name = ingredient['name__name']
