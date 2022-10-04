@@ -137,6 +137,9 @@ backend/foodgram/foodgram/.env
 # media
 media/
 
+# static
+static/
+
 # Compiled source
 *.com
 *.class

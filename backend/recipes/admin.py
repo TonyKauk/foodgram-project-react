@@ -29,7 +29,7 @@ class RecipeAdmin(Admin):
 
 class IngredientAdmin(Admin):
     list_display = ('name', 'measurement_unit')
-    list_filter = ('name',)
+    search_fields = ('^name',)
 
 
 admin.site.register(Recipe, RecipeAdmin)
