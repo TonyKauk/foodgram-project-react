@@ -1,5 +1,6 @@
 import base64
 
+from django.contrib.auth.hashers import make_password
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator, UniqueValidator
@@ -63,6 +64,16 @@ class UserSignUpSerializer(serializers.ModelSerializer):
             'password',
             'id',
         ]
+
+    def create(self, validated_data):
+        user = User.objects.create(
+            email=validated_data['email'],
+            first_name=validated_data['first_name'],
+            last_name=validated_data['last_name'],
+            username=validated_data['username'],
+            password=make_password(validated_data['password'])
+        )
+        return user
 
 
 class UserPasswordResetSerializer(serializers.Serializer):
