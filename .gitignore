@@ -176,8 +176,5 @@ Thumbs.db
 # DB dump
 db_dump_021022.json
 
-# GitHub actions
-/.github/
-
 # React
 node_modules/
